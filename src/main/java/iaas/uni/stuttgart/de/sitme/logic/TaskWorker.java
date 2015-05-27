@@ -25,6 +25,7 @@ import net.lingala.zip4j.model.ZipParameters;
 import net.lingala.zip4j.util.Zip4jConstants;
 import net.lingala.zip4j.core.ZipFile;
 import iaas.uni.stuttgart.de.sitme.data.Configuration;
+import iaas.uni.stuttgart.de.sitme.model.Subscription;
 import iaas.uni.stuttgart.de.sitme.model.TaskState;
 import iaas.uni.stuttgart.de.sitme.util.Constants;
 import iaas.uni.stuttgart.de.sitme.util.Util;
@@ -117,7 +118,7 @@ public class TaskWorker implements Runnable {
 		}
 
 		this.currentState.setProcessBpelPath(processBpelPath);
-		
+
 		List<Path> wsdlPaths = Util.findFilesRecursive("wsdl",
 				this.currentState.getWorkingDir());
 
@@ -125,15 +126,16 @@ public class TaskWorker implements Runnable {
 				this.currentState.getProcessBpelPath());
 
 		this.currentState.setProcessWSDLPath(processWSDLFile);
-		
+
 		// inject wsdl, partnerLinkType, partnerLink, invoke and provide
-		SrsServiceInjector.injectSrsService(this.currentState);		
-		
+		SrsServiceInjector.injectSrsService(this.currentState);
+
 		// transform sitme event activities
-		SitMEEventTransformer.transformSitMEEvents(this.currentState);
-		
+		List<Subscription> subscriptions = SitMEEventTransformer
+				.transformSitMEEvents(this.currentState);
+
 		// TODO transform rest of sitme activities
-		
+
 		// package process in temp dir
 		try {
 			Path repackagedProcessArchivePath = Paths.get(Files
@@ -159,44 +161,46 @@ public class TaskWorker implements Runnable {
 		BpsConnector bpsConnector = new BpsConnector();
 
 		// "https://192.168.2.108:9443"
+		Configuration config = new Configuration();
 
 		String processId = bpsConnector.deploy(this.currentState
-				.getRepackagedProcessPath().toFile(), Configuration
-				.getInstance().getWso2BpsAddress(), Configuration.getInstance()
-				.getWso2BpsUserLogin(), Configuration.getInstance()
+				.getRepackagedProcessPath().toFile(), config
+				.getWso2BpsAddress(), config.getWso2BpsUserLogin(), config
 				.getWso2BpsPwLogin());
 		Map<String, URI> endpoints = bpsConnector.getEndpointsForPID(processId,
-				Configuration.getInstance().getWso2BpsAddress(), Configuration
-						.getInstance().getWso2BpsUserLogin(), Configuration
-						.getInstance().getWso2BpsPwLogin());
+				config.getWso2BpsAddress(), config.getWso2BpsUserLogin(),
+				config.getWso2BpsPwLogin());
 
 		URI srsCallbackEndpoint = null;
-		
+
 		System.out.println("Found following endpoints: ");
-		for(String serviceName : endpoints.keySet()){
+		for (String serviceName : endpoints.keySet()) {
 			System.out.println("ServiceName: " + serviceName);
-			System.out.println("Endpoint: " +  endpoints.get(serviceName));
-			
-			if(serviceName.equals(Constants.SRSService_PartnerLinkName)){
+			System.out.println("Endpoint: " + endpoints.get(serviceName));
+
+			if (serviceName.equals(Constants.SRSService_PartnerLinkName)) {
 				srsCallbackEndpoint = endpoints.get(serviceName);
-				if(srsCallbackEndpoint.toString().endsWith("?wsdl")){
+				if (srsCallbackEndpoint.toString().endsWith("?wsdl")) {
 					try {
-						srsCallbackEndpoint = new URI(srsCallbackEndpoint.toString().substring(0, srsCallbackEndpoint.toString().length() - "?wsdl".length()));
+						srsCallbackEndpoint = new URI(srsCallbackEndpoint
+								.toString().substring(
+										0,
+										srsCallbackEndpoint.toString().length()
+												- "?wsdl".length()));
 					} catch (URISyntaxException e) {
 						e.printStackTrace();
 					}
 				}
 			}
 		}
-		
+
 		/* subscribe process at srs */
 		this.currentState.setCurrentState(TaskState.State.SUBSCRIBING);
 		this.currentState.setCurrentMessage("Subscribing SitME Events");
 
 		URL serviceUrl = null;
 		try {
-			serviceUrl = new URL(Configuration.getInstance()
-					.getSrsServiceAddress() + "?wsdl");
+			serviceUrl = new URL(config.getSrsServiceAddress() + "?wsdl");
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
@@ -204,15 +208,17 @@ public class TaskWorker implements Runnable {
 		SrsService_Service service = new SrsService_Service(serviceUrl);
 		SrsService serviceClient = service.getSrsServiceSOAP();
 
-		SubscribeRequest subReq = new SubscribeRequest();
+		for (Subscription subs : subscriptions) {
+			SubscribeRequest subReq = new SubscribeRequest();
 
-		// TODO set proper data
-		subReq.setSituation("someSit123");
-		subReq.setObject("someObj123");
-		subReq.setEndpoint(srsCallbackEndpoint.toString());
-		subReq.setCorrelation("someCorrelation123");
+			// TODO set proper data
+			subReq.setSituation(subs.getSituationId());
+			subReq.setObject(subs.getObjectId());
+			subReq.setEndpoint(srsCallbackEndpoint.toString());
+			subReq.setCorrelation("someCorrelation123");
 
-		serviceClient.subscribe(subReq);
+			serviceClient.subscribe(subReq);
+		}
 	}
 
 }

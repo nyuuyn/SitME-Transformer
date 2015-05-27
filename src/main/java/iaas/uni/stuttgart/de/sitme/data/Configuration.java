@@ -12,15 +12,7 @@ public class Configuration {
 	
 	private String srsServiceAddress = "http://localhost:8080/srsTestService/services/srsService";
 	
-	private Configuration() {
-	}
-
-	private static class SingletonHolder {
-		private static final Configuration INSTANCE = new Configuration();
-	}
-
-	public static Configuration getInstance() {
-		return SingletonHolder.INSTANCE;
+	public Configuration() {
 	}
 	
 	public String getWso2BpsAddress() {
