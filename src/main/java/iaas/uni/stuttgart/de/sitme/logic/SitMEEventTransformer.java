@@ -23,7 +23,7 @@ public class SitMEEventTransformer {
 	public static List<Subscription> transformSitMEEvents(TaskState taskState) {
 
 		List<Subscription> subscriptions = new ArrayList<Subscription>();
-		
+
 		Path bpelProcessPath = taskState.getProcessBpelPath();
 
 		Document bpelProcessDocument = Util
@@ -45,6 +45,8 @@ public class SitMEEventTransformer {
 
 		Node variablesNode = null;
 		// FIXME works only if one global variables element is defined
+		// Tip: Use recursive getParent and check for elements which can have a
+		// 'variables' child element  (scope,..)
 		switch (variablesNodes.getLength()) {
 		case 0:
 			System.out
@@ -62,33 +64,43 @@ public class SitMEEventTransformer {
 
 		for (int i = 0; i < sitMeEventNodes.getLength(); i++) {
 			Node sitMeEventNode = sitMeEventNodes.item(i);
+			
+			if(sitMeEventNode.getParentNode().getLocalName().equals("SituationalScope")){
+				// ignore SituationEvents which are nested in SituationalScopes
+				continue;
+			}
 			NodeList sitMeEventNodeChildren = sitMeEventNode.getChildNodes();
 
 			Node situationNode = null;
 			Node objectNode = null;
 
-			for(int index = 0; index < sitMeEventNodeChildren.getLength(); index++){
+			for (int index = 0; index < sitMeEventNodeChildren.getLength(); index++) {
 				Node sitMeEventChildNode = sitMeEventNodeChildren.item(index);
-				if(sitMeEventChildNode.getLocalName() != null && sitMeEventChildNode.getLocalName().equals("Situation")){
+				if (sitMeEventChildNode.getLocalName() != null
+						&& sitMeEventChildNode.getLocalName().equals(
+								"Situation")) {
 					situationNode = sitMeEventChildNode;
 				}
-				if(sitMeEventChildNode.getLocalName() != null && sitMeEventChildNode.getLocalName().equals("Object")){
+				if (sitMeEventChildNode.getLocalName() != null
+						&& sitMeEventChildNode.getLocalName().equals("Object")) {
 					objectNode = sitMeEventChildNode;
 				}
 			}
-			
-			if(situationNode == null){
-				System.out.println("SituationEvent must have Situation and Object elements.");
+
+			if (situationNode == null) {
+				System.out
+						.println("SituationEvent must have Situation and Object elements.");
 				return null;
 			}
-			
-			if(objectNode == null){
-				System.out.println("SituationEvent must have Situation and Object elements.");
+
+			if (objectNode == null) {
+				System.out
+						.println("SituationEvent must have Situation and Object elements.");
 				return null;
 			}
-			
-			
-			System.out.println("SituationNodeName: " + situationNode.getNodeName());
+
+			System.out.println("SituationNodeName: "
+					+ situationNode.getNodeName());
 			System.out.println(situationNode.getTextContent());
 			System.out.println(situationNode.getNodeValue());
 			System.out.println(situationNode.getNodeType());
@@ -96,14 +108,15 @@ public class SitMEEventTransformer {
 			System.out.println(objectNode.getTextContent());
 			System.out.println(objectNode.getNodeValue());
 			System.out.println(objectNode.getNodeType());
-			
-			subscriptions.add(new Subscription(situationNode.getTextContent(), objectNode.getTextContent()));
+
+			subscriptions.add(new Subscription(situationNode.getTextContent(),
+					objectNode.getTextContent()));
 
 			Element bpelVariableElement = bpelProcessDocument.createElementNS(
 					"http://docs.oasis-open.org/wsbpel/2.0/process/executable",
 					"variable");
 
-			((Element)variablesNode).setAttribute("xmlns:srsNs",
+			((Element) variablesNode).setAttribute("xmlns:srsNs",
 					Constants.SRSService_Namespace);
 
 			bpelVariableElement.setAttribute("messageType", "srsNs:"
@@ -122,8 +135,8 @@ public class SitMEEventTransformer {
 					"http://docs.oasis-open.org/wsbpel/2.0/process/executable",
 					"receive");
 
-			bpelReceiveElement.setAttribute("name",
-					"SitMeSituationEvent_" + System.currentTimeMillis());
+			bpelReceiveElement.setAttribute("name", "SitMeSituationEvent_"
+					+ System.currentTimeMillis());
 
 			bpelReceiveElement.setAttribute("xmlns:srsNs",
 					Constants.SRSService_Namespace);
@@ -137,21 +150,25 @@ public class SitMEEventTransformer {
 					+ Constants.SRSService_CallbackPortTypeName);
 
 			bpelReceiveElement.setAttribute("variable", varName);
-			
+
 			bpelReceiveElement.setAttribute("createInstance", "yes");
-			
-			// add correlation						
-			Element correlationsElement = bpelProcessDocument.createElementNS("http://docs.oasis-open.org/wsbpel/2.0/process/executable", "correlations");
-			Element correlationElement = bpelProcessDocument.createElementNS("http://docs.oasis-open.org/wsbpel/2.0/process/executable", "correlation");
-			
+
+			// add correlation
+			Element correlationsElement = bpelProcessDocument.createElementNS(
+					"http://docs.oasis-open.org/wsbpel/2.0/process/executable",
+					"correlations");
+			Element correlationElement = bpelProcessDocument.createElementNS(
+					"http://docs.oasis-open.org/wsbpel/2.0/process/executable",
+					"correlation");
+
 			correlationElement.setAttribute("initiate", "yes");
-			correlationElement.setAttribute("set", Constants.SRSService_correlationSetName);
-			
+			correlationElement.setAttribute("set",
+					Constants.SRSService_correlationSetName);
+
 			correlationsElement.appendChild(correlationElement);
-			
+
 			bpelReceiveElement.appendChild(correlationsElement);
-			
-			
+
 			bpelReceiveElement = (Element) bpelProcessDocument.importNode(
 					bpelReceiveElement, true);
 
@@ -163,7 +180,7 @@ public class SitMEEventTransformer {
 		}
 
 		Util.writeDOMtoFile(bpelProcessDocument, taskState.getProcessBpelPath());
-		
+
 		return subscriptions;
 	}
 

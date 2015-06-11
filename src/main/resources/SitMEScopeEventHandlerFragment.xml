@@ -1,0 +1,20 @@
+<bpel:eventHandlers
+	xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+	xmlns:tns{id}="http://iaas.uni-stuttgart.de/SitME" xmlns:srsNs{id}="http://www.iaas.uni-stuttgart.de/srsService/">
+	<bpel:onEvent partnerLink="{srsServicePartnerLinkName}"
+		portType="srsNs{id}:{srsServicePortType}" operation="Notify"
+		variable="EventHandlerNotifyRequest{id}" messageType="srsNs{id}:NotifySituationRequest">
+
+		<bpel:scope>
+			<bpel:assign>
+				<bpel:from>
+					<bpel:literal>deiMudda</bpel:literal>
+				</bpel:from>
+					<bpel:to part="payload" variable="output">
+						<bpel:query queryLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">tns{id}:result</bpel:query>
+					</bpel:to>
+			</bpel:assign>
+			<bpel:throw name="SitMEThrow{id}" faultName="tns{id}:SituationScopeNotifyAbort" />
+		</bpel:scope>
+	</bpel:onEvent>
+</bpel:eventHandlers>

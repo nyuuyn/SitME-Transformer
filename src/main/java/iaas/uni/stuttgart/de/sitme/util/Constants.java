@@ -31,5 +31,9 @@ public class Constants {
 	public static final String SitME_NotifyMessageType = "NotifySituationRequest";
 
 	public static final String ApacheOde_Namespace = "http://www.apache.org/ode/schemas/dd/2007/03";
+	
+	public static final String BPEL_Namespace = "http://docs.oasis-open.org/wsbpel/2.0/process/executable";
+	
+	public static final String XMLSchema_Namespace = "http://www.w3.org/2001/XMLSchema";
 
 }

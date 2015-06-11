@@ -19,21 +19,43 @@
 			<xsd:element name="GetRequest">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="Situation" type="xsd:string" />
-						<xsd:element name="Object" type="xsd:string" />
+						<xsd:element name="SituationEvent" maxOccurs="unbounded" type="tns:SituationEventType" />						
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
+
+			<xsd:complexType name="SituationEventType">
+				<xsd:sequence>
+					<xsd:element name="Situation" type="xsd:string" />
+					<xsd:element name="Object" type="xsd:string" />
+				</xsd:sequence>
+			</xsd:complexType>
 
 			<xsd:element name="GetResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="SituationMap" type="tns:ParamsMapItemType" />
+						<xsd:element name="Situation" maxOccurs="unbounded" type="tns:SituationEventStatusType" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
+			
+			<xsd:complexType name="SituationEventStatusType">
+				<xsd:sequence>
+					<xsd:element name="SituationId" type="xsd:string"/>
+					<xsd:element name="ObjectId" type="xsd:string"/>
+					<xsd:element name="Triggered" type="xsd:boolean"/>
+					<xsd:element name="PropertyMap" type="tns:PropertyMapType"/>
+				</xsd:sequence>
+			</xsd:complexType>
 
-			<xsd:complexType name="ParamsMapItemType">
+			<xsd:complexType name="PropertyMapType">
+				<xsd:sequence>
+					<xsd:element maxOccurs="unbounded" name="Property"
+						type="tns:PropertyMapItemType" />
+				</xsd:sequence>
+			</xsd:complexType>
+
+			<xsd:complexType name="PropertyMapItemType">
 				<xsd:sequence>
 					<xsd:element name="key" type="xsd:string" />
 					<xsd:element name="value" type="xsd:string" />
@@ -131,7 +153,8 @@
 
 	<wsdl:service name="srsService">
 		<wsdl:port binding="tns:srsServiceSOAP" name="srsServiceSOAP">
-			<soap:address location="http://www.example.org/" />
+			<soap:address
+				location="http://localhost:8080/srsTestService/services/srsService" />
 		</wsdl:port>
 		<wsdl:port name="srsCallbackServiceSOAP" binding="tns:srsCallbackServiceSOAP">
 			<soap:address location="http://www.example.org/" />

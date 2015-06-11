@@ -134,6 +134,9 @@ public class TaskWorker implements Runnable {
 		List<Subscription> subscriptions = SitMEEventTransformer
 				.transformSitMEEvents(this.currentState);
 
+		// transform sitme scopes		
+		SitMEScopeTransformer.transformSitMEScopes(this.currentState);
+		
 		// TODO transform rest of sitme activities
 
 		// package process in temp dir
