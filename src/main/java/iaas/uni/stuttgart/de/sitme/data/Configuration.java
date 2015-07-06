@@ -11,7 +11,10 @@ public class Configuration {
 	private String wso2BpsPwLogin = "admin";
 	
 	private String srsServiceAddress = "http://localhost:8080/srsTestService/services/srsService";
+	// portName = srsCallbackServiceSOAP serviceName = srsService, endpoint pattern for wso2bps 3.2.0 localhost:9763/services/{serviceName}.{serviceName}{http}{portName}{Endpoint}
+	private String srsServiceCallbackAddress = "http://localhost:9763/services/srsServiceCallback.srsServiceCallbackhttpsrsCallbackServiceSOAPEndpoint/";
 	
+
 	public Configuration() {
 	}
 	
@@ -47,4 +50,11 @@ public class Configuration {
 		this.srsServiceAddress = srsServiceAddress;
 	}
 
+	public String getSrsServiceCallbackAddress() {
+		return srsServiceCallbackAddress;
+	}
+	
+	public void setSrsServiceCallbackAddress(String srsServiceCallbackAddress) {
+		this.srsServiceCallbackAddress = srsServiceCallbackAddress;
+	}
 }

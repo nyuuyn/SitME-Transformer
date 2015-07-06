@@ -17,6 +17,8 @@ public class Constants {
 	public static final String SRSService_CallbackPortTypeName = "srsServiceNotifciation";
 
 	public static final String SRSService_serviceName = "srsService";
+	
+	public static final String SRSService_callbackServiceName = "srsServiceCallback";
 
 	public static final String SRSService_portName = "srsServiceSOAP";
 

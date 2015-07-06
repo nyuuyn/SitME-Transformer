@@ -1,5 +1,6 @@
 package iaas.uni.stuttgart.de.sitme.logic;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -12,6 +13,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import iaas.uni.stuttgart.de.sitme.data.Configuration;
 import iaas.uni.stuttgart.de.sitme.model.TaskState;
 import iaas.uni.stuttgart.de.sitme.util.Constants;
 import iaas.uni.stuttgart.de.sitme.util.Util;
@@ -169,6 +171,7 @@ public class SrsServiceInjector {
 						Constants.SRSService_PartnerLinkName);
 				partnerLinkElement.setAttribute("myRole", "Requester");
 				partnerLinkElement.setAttribute("partnerRole", "Requestee");
+				partnerLinkElement.setAttribute("initializePartnerRole", "yes");
 
 				partnerLinkElement.setAttribute("partnerLinkType",
 						"blubPrefix:"
@@ -288,6 +291,61 @@ public class SrsServiceInjector {
 		Element invokerServiceNode = deployXmlDocument.createElementNS(
 				Constants.ApacheOde_Namespace, "service");
 
+		Element endpointNode = deployXmlDocument.createElementNS(
+				"http://wso2.org/bps/bpel/endpoint/config", "endpoint");
+
+		endpointNode.setAttribute("endpointReference", "srsService.epr");
+
+		invokerServiceNode.appendChild(endpointNode);
+
+		// add endpoint epr's to working dir
+
+		URL serviceEprUrl = SrsServiceInjector.class
+				.getResource("/srsService.epr");
+		URL serviceCallbackEprUrl = SrsServiceInjector.class
+				.getResource("/srsCallbackService.epr");
+
+		Path serviceEprUrlPath = null;
+		Path serviceCallbackEprUrlPath = null;
+		try {
+			serviceEprUrlPath = Paths.get(serviceEprUrl.toURI());
+			serviceCallbackEprUrlPath = Paths
+					.get(serviceCallbackEprUrl.toURI());
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		String eprContent = null;
+		String eprCallbackContent = null;
+		try {
+			eprContent = FileUtils.readFileToString(serviceEprUrlPath.toFile());
+			eprCallbackContent = FileUtils
+					.readFileToString(serviceCallbackEprUrlPath.toFile());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		eprContent = eprContent.replace("{srsServiceAddress}",
+				new Configuration().getSrsServiceAddress());
+		eprCallbackContent = eprCallbackContent.replace(
+				"{srsCallbackServiceAddress}",
+				new Configuration().getSrsServiceCallbackAddress());
+
+		try {
+			FileUtils.writeStringToFile(
+					Paths.get(taskState.getWorkingDir().toString(),
+							"srsService.epr").toFile(), eprContent);
+			FileUtils.writeStringToFile(
+					Paths.get(taskState.getWorkingDir().toString(),
+							"srsCallbackService.epr").toFile(),
+					eprCallbackContent);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 		invokerServiceNode.setAttribute("name", "srsService:"
 				+ Constants.SRSService_serviceName);
 		invokerServiceNode.setAttribute("port", Constants.SRSService_portName);
@@ -302,11 +360,18 @@ public class SrsServiceInjector {
 		provideNode.setAttribute("partnerLink",
 				Constants.SRSService_PartnerLinkName);
 
+		Element endpointCallbackNode = deployXmlDocument.createElementNS(
+				"http://wso2.org/bps/bpel/endpoint/config", "endpoint");
+
+		endpointCallbackNode.setAttribute("endpointReference", "srsCallbackService.epr");
+		
+		provideNode.appendChild(endpointCallbackNode);
+
 		Element provideServiceNode = deployXmlDocument.createElementNS(
 				Constants.ApacheOde_Namespace, "service");
 
 		provideServiceNode.setAttribute("name", "srsService:"
-				+ Constants.SRSService_serviceName);
+				+ Constants.SRSService_callbackServiceName);
 
 		provideServiceNode.setAttribute("port",
 				Constants.SRSService_callbackPortName);

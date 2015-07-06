@@ -16,10 +16,15 @@ import org.opentosca.util.fileaccess.service.impl.zip.ZipManager;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import de.uni_stuttgart.iaas.srsservice.MultiSubscribeRequestType;
+import de.uni_stuttgart.iaas.srsservice.MultiSubscribeType;
 import de.uni_stuttgart.iaas.srsservice.SrsService;
 import de.uni_stuttgart.iaas.srsservice.SrsService_Service;
 import de.uni_stuttgart.iaas.srsservice.SrsService_SrsServiceSOAP_Client;
 import de.uni_stuttgart.iaas.srsservice.SubscribeRequest;
+import de.uni_stuttgart.iaas.srsservice.SubscribeRequestType;
+import de.uni_stuttgart.iaas.srsservice.SubscribeRequestType2;
+import de.uni_stuttgart.iaas.srsservice.SubscribeType;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.ZipParameters;
 import net.lingala.zip4j.util.Zip4jConstants;
@@ -134,9 +139,9 @@ public class TaskWorker implements Runnable {
 		List<Subscription> subscriptions = SitMEEventTransformer
 				.transformSitMEEvents(this.currentState);
 
-		// transform sitme scopes		
+		// transform sitme scopes
 		SitMEScopeTransformer.transformSitMEScopes(this.currentState);
-		
+
 		// TODO transform rest of sitme activities
 
 		// package process in temp dir
@@ -197,31 +202,51 @@ public class TaskWorker implements Runnable {
 			}
 		}
 
-		/* subscribe process at srs */
-		this.currentState.setCurrentState(TaskState.State.SUBSCRIBING);
-		this.currentState.setCurrentMessage("Subscribing SitME Events");
+		if (!subscriptions.isEmpty()) {
+			/* subscribe process at srs */
+			this.currentState.setCurrentState(TaskState.State.SUBSCRIBING);
+			this.currentState.setCurrentMessage("Subscribing SitME Events");
 
-		URL serviceUrl = null;
-		try {
-			serviceUrl = new URL(config.getSrsServiceAddress() + "?wsdl");
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
+			URL serviceUrl = null;
+			try {
+				serviceUrl = new URL(config.getSrsServiceAddress() + "?wsdl");
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
 
-		SrsService_Service service = new SrsService_Service(serviceUrl);
-		SrsService serviceClient = service.getSrsServiceSOAP();
+			SrsService_Service service = new SrsService_Service(serviceUrl);
+			SrsService serviceClient = service.getSrsServiceSOAP();
 
-		for (Subscription subs : subscriptions) {
-			SubscribeRequest subReq = new SubscribeRequest();
+			for (Subscription subs : subscriptions) {
+				// create empty request
+				SubscribeRequest subReq = new SubscribeRequest();
 
-			// TODO set proper data
-			subReq.setSituation(subs.getSituationId());
-			subReq.setObject(subs.getObjectId());
-			subReq.setEndpoint(srsCallbackEndpoint.toString());
-			subReq.setCorrelation("someCorrelation123");
+				// create MultiSubscribe Body
+				MultiSubscribeRequestType multiSubBody = new MultiSubscribeRequestType();
+				// create list for subscription
+				MultiSubscribeType subList = new MultiSubscribeType();
+				
+				// create situation
+				SubscribeRequestType2 sit = new SubscribeRequestType2();
+				sit.setSituation(subs.getSituationId());
+				sit.setObject(subs.getObjectId());
 
-			serviceClient.subscribe(subReq);
+				// set endpoint and correlation for multisub
+				multiSubBody.setEndpoint(srsCallbackEndpoint.toString());
+				// TODO need to handle correlation in a better way here
+				multiSubBody.setCorrelation("someCorrelation123");
+
+				// add sit to sub list
+				subList.getSubscription().add(sit);
+				
+				// add list ot multi sub
+				multiSubBody.setSubscriptions(subList);
+				
+				// add multiSub body to request
+				subReq.setMultiSubscription(multiSubBody);
+				
+				serviceClient.subscribe(subReq);
+			}
 		}
 	}
-
 }

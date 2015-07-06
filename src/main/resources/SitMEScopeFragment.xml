@@ -2,108 +2,193 @@
 
 <fragment xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
 
-	<!-- Fragment variability points: -->
-	<!-- {id}, {seconds}, {srsPartnerLink}, {SituationEvent}, {eventHandler} -->
+
 
 	<bpel:scope name="SitMEScope{id}" xmlns:xsd{id}="http://www.w3.org/2001/XMLSchema"
-		xmlns:srsNs{id}="http://www.iaas.uni-stuttgart.de/srsService/" xmlns:tns{id}="http://iaas.uni-stuttgart.de/SitME">
-		
-		<bpel:variables>
-			<variable name="startTime{id}" type="xsd{id}:dateTime"
-				xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable" />
-			<variable name="situationCheck{id}" type="xsd{id}:boolean"
-				xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable" />
-			<variable messageType="srsNs{id}:GetSituationRequest" name="SRSGetRequest{id}"
-				xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable" />
-			<variable messageType="srsNs{id}:GetSituationResponse" name="SRSGetResponse{id}"
-				xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable" />			
-		</bpel:variables>
-		{eventHandler}
-		
-		<bpel:sequence name="SitMESequence{id}">
-			<bpel:assign validate="no" name="AssignStartTime{id}">
-				<bpel:copy>
-					<bpel:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath2.0">
-                    <![CDATA[current-dateTime()]]>
-					</bpel:from>
-					<bpel:to variable="startTime{id}"></bpel:to>
-				</bpel:copy>
-			</bpel:assign>
-			<bpel:assign validate="no" name="AssignSituationCheck{id}">
-				<bpel:copy>
-					<bpel:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath2.0">
-                	<![CDATA[false()]]>
-					</bpel:from>
-					<bpel:to variable="situationCheck{id}"></bpel:to>
-				</bpel:copy>
-			</bpel:assign>
-			<bpel:assign validate="no" name="AssignSRSGetRequest{id}">
-				<bpel:copy>
-					<bpel:from>
-						<bpel:literal>
-							<tns{id}:GetRequest xmlns:tns{id}="http://www.iaas.uni-stuttgart.de/srsService/"
-								xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-								{SituationEvent}
-							</tns{id}:GetRequest>
-						</bpel:literal>
-					</bpel:from>
-					<bpel:to variable="SRSGetRequest{id}" part="parameters"></bpel:to>
-				</bpel:copy>
-			</bpel:assign>
-			<bpel:while name="WhileSituationCheck{id}">
-				<bpel:condition expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0"><![CDATA[$situationCheck{id} = false()]]></bpel:condition>
-				<bpel:sequence xmlns:srs1337="http://www.iaas.uni-stuttgart.de/srsService/">
-					<bpel:flow name="SitMEScopeFlow{id}">
-						<bpel:links>
-							<bpel:link name="link1"></bpel:link>
-							<bpel:link name="link2"></bpel:link>
-							<bpel:link name="link3"></bpel:link>
-						</bpel:links>
-						<bpel:invoke name="InvokeSRSGetSituation{id}"
-							partnerLink="{srsPartnerLink}" operation="Get" portType="srsNs{id}:srsService"
-							inputVariable="SRSGetRequest{id}" outputVariable="SRSGetResponse{id}">
-							<bpel:sources>
-								<bpel:source linkName="link1"></bpel:source>
-							</bpel:sources>
-						</bpel:invoke>
-						<bpel:assign validate="no"
-							name="AssignSRSGetRequestToSituationCheck{id}" xmlns:saxon="http://exslt.org/dates-and-times">
-							<bpel:targets>
-								<bpel:target linkName="link1"></bpel:target>
-							</bpel:targets>
-							<bpel:sources>
-								<bpel:source linkName="link2">
-									<bpel:transitionCondition
-										expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath2.0"><![CDATA[boolean(current-dateTime() gt ($startTime{id} + xsd{id}:dayTimeDuration('PT0H0M{seconds}S')))]]></bpel:transitionCondition>
-								</bpel:source>
-								<bpel:source linkName="link3">
-									<bpel:transitionCondition
-										expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath2.0"><![CDATA[boolean(current-dateTime() lt ($startTime{id} + xsd{id}:dayTimeDuration('PT0H0M{seconds}S')))]]></bpel:transitionCondition>
-								</bpel:source>
-							</bpel:sources>
-							<!-- copies the first value (hopefully bool) in SituationMap to situationCheck -->
-							<bpel:copy>
-								<bpel:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath2.0">						    
-                        <![CDATA[empty(index-of($SRSGetResponse{id}.parameters/*[local-name()='Situation']/*[local-name()='Triggered']/text(),'false'))]]>
-								</bpel:from>
-								<bpel:to variable="situationCheck{id}"></bpel:to>
-							</bpel:copy>
+		xmlns:srsNs{id}="http://www.iaas.uni-stuttgart.de/srsService/"
+		xmlns:tns{id}="http://iaas.uni-stuttgart.de/SitME">
 
-						</bpel:assign>
-						<bpel:throw name="SitMEThrow{id}" faultName="tns{id}:SituationScopeWaitTimeout">
-							<bpel:targets>
-								<bpel:target linkName="link2"></bpel:target>
-							</bpel:targets>
-						</bpel:throw>
-						<bpel:wait name="SitMEWait{id}">
-							<bpel:targets>
-								<bpel:target linkName="link3"></bpel:target>
-							</bpel:targets>
-							<bpel:for><![CDATA['PT0H0M1S']]></bpel:for>
-						</bpel:wait>
-					</bpel:flow>
+		<bpel:variables>
+			<bpel:variable type="xsd{id}:dateTime" name="startTime{id}" />
+			<bpel:variable type="xsd{id}:boolean" name="situationCheck{id}" />
+			<bpel:variable messageType="srsNs{id}:GetSituationRequest"
+				name="SRSGetRequest{id}" />
+			<bpel:variable messageType="srsNs{id}:GetSituationResponse"
+				name="SRSGetResponse{id}" />
+			<bpel:variable messageType="srsNs{id}:SubscribeSituationRequest"
+				name="SRSSubscribeSituationRequest{id}" />
+			<!-- <bpel:variable type="xsd{id}:string" name="srsServiceEndpoint{id}" 
+				/> <bpel:variable type="xsd{id}:string" name="srsServiceCallbackEndpoint{id}" 
+				/> -->
+		</bpel:variables>
+
+		<correlationSets
+			xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+			xmlns:srsService="http://www.iaas.uni-stuttgart.de/srsService/">
+			<correlationSet name="srsCorrelationSet{id}"
+				properties="srsService:SrsServiceNotifyCorrelationProperty" />
+		</correlationSets>
+
+		<bpel:sequence>
+			<bpel:scope name="SubscribeScope">
+				<bpel:sequence>
+					<bpel:assign validate="no"
+						name="AssignSubscribeSituationRequest{id}">
+
+
+
+						<bpel:copy>
+							<bpel:from>
+								<bpel:literal>
+									<tns{id}:SubscribeRequest xmlns:tns{id}="http://www.iaas.uni-stuttgart.de/srsService/"
+										xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+										<MultiSubscription>
+											<Correlation>{Correlation}</Correlation>
+											<Endpoint></Endpoint>
+											<Subscriptions>
+												{Subscription}
+											</Subscriptions>
+										</MultiSubscription>
+									</tns{id}:SubscribeRequest>
+								</bpel:literal>
+							</bpel:from>
+							<bpel:to variable="SRSSubscribeSituationRequest{id}"
+								part="parameters" />
+						</bpel:copy>
+
+						<bpel:copy>
+							<bpel:from>
+								<bpel:literal>{srsServiceCallbackEndpoint}</bpel:literal>
+							</bpel:from>
+							<!-- <bpel:from partnerLink="{srsPartnerLink}" endpointReference="myRole"/> -->
+							<bpel:to variable="SRSSubscribeSituationRequest{id}"
+								part="parameters">
+								<bpel:query queryLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath2.0"><![CDATA[//*[local-name()='MultiSubscription']/*[local-name()='Endpoint']]]></bpel:query>
+							</bpel:to>
+						</bpel:copy>
+
+						<bpel:copy>
+							<bpel:from>
+								<bpel:literal>
+									<wsa:ReplyTo xmlns:wsa="http://www.w3.org/2005/08/addressing"
+										xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+										<Address>{srsServiceCallbackEndpoint}</Address>
+									</wsa:ReplyTo>
+								</bpel:literal>
+							</bpel:from>
+							<bpel:to variable="SRSSubscribeSituationRequest{id}"
+								header="ReplyTo">
+							</bpel:to>
+						</bpel:copy>
+
+					</bpel:assign>
+
+
+					<bpel:invoke name="InvokeSRSSubscribeSituation{id}"
+						partnerLink="{srsPartnerLink}" operation="Subscribe" portType="srsNs{id}:srsService"
+						inputVariable="SRSSubscribeSituationRequest{id}">
+						<bpel:correlations>
+							<bpel:correlation initiate="yes" set="srsCorrelationSet" />
+						</bpel:correlations>
+
+
+					</bpel:invoke>
+					<bpel:scope>
+
+						{eventHandler}
+
+						<bpel:sequence name="SitMESequence{id}">
+
+							<bpel:assign validate="no" name="AssignStartTime{id}">
+								<bpel:copy>
+									<bpel:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath2.0">
+                    <![CDATA[current-dateTime()]]>
+									</bpel:from>
+									<bpel:to variable="startTime{id}"></bpel:to>
+								</bpel:copy>
+							</bpel:assign>
+							<bpel:assign validate="no" name="AssignSituationCheck{id}">
+								<bpel:copy>
+									<bpel:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath2.0">
+                	<![CDATA[false()]]>
+									</bpel:from>
+									<bpel:to variable="situationCheck{id}"></bpel:to>
+								</bpel:copy>
+							</bpel:assign>
+							<bpel:assign validate="no" name="AssignSRSGetRequest{id}">
+								<bpel:copy>
+									<bpel:from>
+										<bpel:literal>
+											<tns{id}:GetRequest xmlns:tns{id}="http://www.iaas.uni-stuttgart.de/srsService/"
+												xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+												{SituationEvent}
+											</tns{id}:GetRequest>
+										</bpel:literal>
+									</bpel:from>
+									<bpel:to variable="SRSGetRequest{id}" part="parameters"></bpel:to>
+								</bpel:copy>
+							</bpel:assign>
+							<bpel:while name="WhileSituationCheck{id}">
+								<bpel:condition expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0"><![CDATA[$situationCheck{id} = false()]]></bpel:condition>
+								<bpel:sequence xmlns:srs1337="http://www.iaas.uni-stuttgart.de/srsService/">
+									<bpel:flow name="SitMEScopeFlow{id}">
+										<bpel:links>
+											<bpel:link name="link1"></bpel:link>
+											<bpel:link name="link2"></bpel:link>
+											<bpel:link name="link3"></bpel:link>
+										</bpel:links>
+										<bpel:invoke name="InvokeSRSGetSituation{id}"
+											partnerLink="{srsPartnerLink}" operation="Get"
+											portType="srsNs{id}:srsService" inputVariable="SRSGetRequest{id}"
+											outputVariable="SRSGetResponse{id}">
+											<bpel:sources>
+												<bpel:source linkName="link1"></bpel:source>
+											</bpel:sources>
+										</bpel:invoke>
+										<bpel:assign validate="no"
+											name="AssignSRSGetRequestToSituationCheck{id}" xmlns:saxon="http://exslt.org/dates-and-times">
+											<bpel:targets>
+												<bpel:target linkName="link1"></bpel:target>
+											</bpel:targets>
+											<bpel:sources>
+												<bpel:source linkName="link2">
+													<bpel:transitionCondition
+														expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath2.0"><![CDATA[boolean(current-dateTime() gt ($startTime{id} + xsd{id}:dayTimeDuration('PT0H0M{seconds}S')))]]></bpel:transitionCondition>
+												</bpel:source>
+												<bpel:source linkName="link3">
+													<bpel:transitionCondition
+														expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath2.0"><![CDATA[boolean(current-dateTime() lt ($startTime{id} + xsd{id}:dayTimeDuration('PT0H0M{seconds}S')))]]></bpel:transitionCondition>
+												</bpel:source>
+											</bpel:sources>
+											<!-- copies the first value (hopefully bool) in SituationMap to 
+												situationCheck -->
+											<bpel:copy>
+												<bpel:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath2.0">						    
+                        <![CDATA[empty(index-of($SRSGetResponse{id}.parameters/*[local-name()='Situation']/*[local-name()='Triggered']/text(),'false'))]]>
+												</bpel:from>
+												<bpel:to variable="situationCheck{id}"></bpel:to>
+											</bpel:copy>
+
+										</bpel:assign>
+										<bpel:throw name="SitMEThrow{id}"
+											faultName="tns{id}:SituationScopeWaitTimeout">
+											<bpel:targets>
+												<bpel:target linkName="link2"></bpel:target>
+											</bpel:targets>
+										</bpel:throw>
+										<bpel:wait name="SitMEWait{id}">
+											<bpel:targets>
+												<bpel:target linkName="link3"></bpel:target>
+											</bpel:targets>
+											<bpel:for><![CDATA['PT0H0M1S']]></bpel:for>
+										</bpel:wait>
+									</bpel:flow>
+								</bpel:sequence>
+							</bpel:while>
+						</bpel:sequence>
+					</bpel:scope>
 				</bpel:sequence>
-			</bpel:while>
+			</bpel:scope>
 		</bpel:sequence>
 	</bpel:scope>
 </fragment>

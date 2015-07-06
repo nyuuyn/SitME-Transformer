@@ -5,16 +5,18 @@
 		portType="srsNs{id}:{srsServicePortType}" operation="Notify"
 		variable="EventHandlerNotifyRequest{id}" messageType="srsNs{id}:NotifySituationRequest">
 
+		<bpel:correlations>
+
+			<bpel:correlation set="srsCorrelationSet" initiate="no"/>
+
+		</bpel:correlations>
+
+
 		<bpel:scope>
-			<bpel:assign>
-				<bpel:from>
-					<bpel:literal>deiMudda</bpel:literal>
-				</bpel:from>
-					<bpel:to part="payload" variable="output">
-						<bpel:query queryLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">tns{id}:result</bpel:query>
-					</bpel:to>
-			</bpel:assign>
-			<bpel:throw name="SitMEThrow{id}" faultName="tns{id}:SituationScopeNotifyAbort" />
+		    <bpel:sequence>			
+			<bpel:throw xmlns:sitmeFault="http://iaas.uni-stuttgart.de/SitME" faultName="sitmeFault:NotificationException" />
+			
+			</bpel:sequence>
 		</bpel:scope>
 	</bpel:onEvent>
 </bpel:eventHandlers>

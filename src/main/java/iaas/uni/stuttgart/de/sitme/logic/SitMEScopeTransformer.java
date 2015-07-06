@@ -12,6 +12,10 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -22,6 +26,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import iaas.uni.stuttgart.de.sitme.data.Configuration;
 import iaas.uni.stuttgart.de.sitme.model.BPELFactory;
 import iaas.uni.stuttgart.de.sitme.model.TaskState;
 import iaas.uni.stuttgart.de.sitme.util.Constants;
@@ -197,16 +202,26 @@ public class SitMEScopeTransformer {
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
-		// replace variability points
+		/* replace variability points */
+		Configuration config = new Configuration();
+
 		scopeFragmentString = scopeFragmentString.replace("{id}", id);
 		scopeFragmentString = scopeFragmentString.replace("{seconds}",
 				String.valueOf(seconds));
 		scopeFragmentString = scopeFragmentString.replace("{srsPartnerLink}",
 				srsPartnerLinkName);
 
+		// {srsServiceCallbackEndpoint}, {srsServiceEndpoint}
+		scopeFragmentString = scopeFragmentString.replace(
+				"{srsServiceEndpoint}", config.getSrsServiceAddress());
+		scopeFragmentString = scopeFragmentString.replace(
+				"{srsServiceCallbackEndpoint}",
+				config.getSrsServiceCallbackAddress());
+
 		// checks whether we need an eventhandler (SituationViolation=Abort)
 		boolean needsEventHandler = false;
-		
+		long subscriptionCorrelation = System.currentTimeMillis();
+		int index = 1;
 		for (Node situationEventNode : situationEventNodes) {
 
 			scopeFragmentString = scopeFragmentString.replace(
@@ -214,12 +229,36 @@ public class SitMEScopeTransformer {
 					SitMEScopeTransformer
 							.generateSituationEventElement(situationEventNode)
 							+ "{SituationEvent}");
-			if(SitMEScopeTransformer.getChildNodeValue(situationEventNode, "SituationViolation").equals("Abort")){
+			if (SitMEScopeTransformer.getChildNodeValue(situationEventNode,
+					"SituationViolation").equals("Abort")) {
 				needsEventHandler = true;
 			}
+
+			// append SituationSubscription to SubscribeReq
+			// xmlns:tns{id}="http://www.iaas.uni-stuttgart.de/srsService/"
+			String subscriptionXMLString = "<Subscription><Situation>"
+					+ SitMEScopeTransformer.getChildNodeValue(
+							situationEventNode, "Situation")
+					+ "</Situation><Object>"
+					+ SitMEScopeTransformer.getChildNodeValue(
+							situationEventNode, "Object")
+					+ "</Object></Subscription>";
+
+			scopeFragmentString = scopeFragmentString.replace("{Subscription}",
+					subscriptionXMLString + "{Subscription}");
+
 		}
-		
-		if(needsEventHandler){
+		// remove finished tags
+		scopeFragmentString = scopeFragmentString.replace("{SituationEvent}",
+				"");
+
+		scopeFragmentString = scopeFragmentString.replace("{Subscription}", "");
+
+		scopeFragmentString = scopeFragmentString.replace("{Correlation}",
+				String.valueOf(subscriptionCorrelation));
+
+		// check for eventhandler (SitME Abort Handling)
+		if (needsEventHandler) {
 			URL eventHandlerFragmentURL = SitMEScopeTransformer.class
 					.getResource("/SitMEScopeEventHandlerFragment.xml");
 
@@ -227,27 +266,85 @@ public class SitMEScopeTransformer {
 					+ eventHandlerFragmentURL);
 			String eventHandlerFragmentString = null;
 			try {
-				eventHandlerFragmentString = FileUtils.readFileToString(new File(
-						eventHandlerFragmentURL.toURI()));
+				eventHandlerFragmentString = FileUtils
+						.readFileToString(new File(eventHandlerFragmentURL
+								.toURI()));
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (URISyntaxException e) {
 				e.printStackTrace();
 			}
 			// {srsServicePartnerLinkName},{srsServicePortType}, {id}
-			eventHandlerFragmentString = eventHandlerFragmentString.replace("{id}", id);
-			eventHandlerFragmentString = eventHandlerFragmentString.replace("{srsServicePortType}", Constants.SRSService_CallbackPortTypeName);
-			eventHandlerFragmentString = eventHandlerFragmentString.replace("{srsServicePartnerLinkName}", Constants.SRSService_PartnerLinkName);
-			
+			eventHandlerFragmentString = eventHandlerFragmentString.replace(
+					"{id}", id);
+			eventHandlerFragmentString = eventHandlerFragmentString.replace(
+					"{srsServicePortType}",
+					Constants.SRSService_CallbackPortTypeName);
+			eventHandlerFragmentString = eventHandlerFragmentString.replace(
+					"{srsServicePartnerLinkName}",
+					Constants.SRSService_PartnerLinkName);
+
 			scopeFragmentString = scopeFragmentString.replace("{eventHandler}",
 					eventHandlerFragmentString);
+
+			// URL notifyReceiveFragmentURL = SitMEScopeTransformer.class
+			// .getResource("/SitMEScopeNotifyReceiveFragment.xml");
+			//
+			// System.out.println("Loading SitMEScope notifyReceive fragment from "
+			// + notifyReceiveFragmentURL);
+			// String notifyReceiveFragmentString = null;
+			// try {
+			// notifyReceiveFragmentString = FileUtils
+			// .readFileToString(new File(notifyReceiveFragmentURL
+			// .toURI()));
+			// } catch (IOException e) {
+			// e.printStackTrace();
+			// } catch (URISyntaxException e) {
+			// e.printStackTrace();
+			// }
+			//
+			// notifyReceiveFragmentString =
+			// notifyReceiveFragmentString.replace(
+			// "{id}", id);
+			// notifyReceiveFragmentString =
+			// notifyReceiveFragmentString.replace(
+			// "{srsServicePortType}",
+			// Constants.SRSService_CallbackPortTypeName);
+			// notifyReceiveFragmentString =
+			// notifyReceiveFragmentString.replace(
+			// "{srsServicePartnerLinkName}",
+			// Constants.SRSService_PartnerLinkName);
+			// notifyReceiveFragmentString =
+			// notifyReceiveFragmentString.replace(
+			// "{linkName}",
+			// "receiveNotifyLink" + id);
+			// scopeFragmentString = scopeFragmentString.replace("{links}",
+			// "<bpel:link name=\"receiveNotifyLink" + id +
+			// "\"/><bpel:link name=\"whileToCompensate" + id +"\"/>");
+			// scopeFragmentString = scopeFragmentString.replace("{sources}",
+			// "<bpel:source linkName=\"receiveNotifyLink" + id + "\"/>");
+			// scopeFragmentString =
+			// scopeFragmentString.replace("{whileSources}",
+			// "<bpel:sources><bpel:source linkName=\"whileToCompensate" + id +
+			// "\"/></bpel:sources>");
+			// scopeFragmentString =
+			// scopeFragmentString.replace("{compensateScope}",
+			// "<bpel:compensateScope target=\"NotifyRequestScope"+
+			// id+"\"><bpel:targets><bpel:target linkName=\"whileToCompensate"+id+"\"/></bpel:targets></bpel:compensateScope>");
+			// scopeFragmentString =
+			// scopeFragmentString.replace("{receiveNotify}",
+			// notifyReceiveFragmentString);
 		} else {
 			scopeFragmentString = scopeFragmentString.replace("{eventHandler}",
 					"");
 		}
 
-		// load to dom
+		System.out.println("Created following skeleton: ");
+		System.out.println(scopeFragmentString);
+
+		// load the fragment string to dom
 		Element fragmentElement = null;
+		Document fragmentDoc = null;
 		try {
 			DocumentBuilderFactory dbFac = DocumentBuilderFactory.newInstance();
 			dbFac.setNamespaceAware(true);
@@ -257,8 +354,8 @@ public class SitMEScopeTransformer {
 			InputSource is = new InputSource();
 			is.setCharacterStream(new StringReader(scopeFragmentString));
 
-			Document doc = db.parse(is);
-			fragmentElement = (Element) doc.getFirstChild();
+			fragmentDoc = db.parse(is);
+			fragmentElement = (Element) fragmentDoc.getFirstChild();
 		} catch (ParserConfigurationException e) {
 			e.printStackTrace();
 		} catch (SAXException e) {
@@ -266,40 +363,98 @@ public class SitMEScopeTransformer {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+		// find the sequence element in the fragment
+		// //</bpel:sequence>
+		// </bpel:scope>
+		// </bpel:scope>
+		// </bpel:sequence>
+		// </bpel:scope>
+		// </fragment>
+		Node scopedActivitiesSequenceElement = null;
+		// TODO maybe reduce expr (local-name()='.. ignores NS,..)
+		String xpathExpr = "/*[local-name()='fragment']/*[local-name()='scope']/*[local-name()='sequence']/*[local-name()='scope']/*[local-name()='sequence']/*[local-name()='scope']/*[local-name()='sequence' and @name='SitMESequence"
+				+ id + "']";
+		XPath xPath = XPathFactory.newInstance().newXPath();
+		NodeList nodes = null;
+		try {
+			nodes = (NodeList) xPath.evaluate(xpathExpr,
+					fragmentDoc.getDocumentElement(), XPathConstants.NODESET);
+			if (nodes.getLength() == 1) {
+				scopedActivitiesSequenceElement = nodes.item(0);
+			} else {
+				System.out
+						.println("Internal fragment is malformed. Only one sequence with element with attribute name=\"SitMESequence"
+								+ id + "\" is allowed");
+				return;
+			}
+		} catch (XPathExpressionException e) {
+			e.printStackTrace();
+		}
+
+		// add activities in the defined SitME Scope to the fragment
+		for (int i = 0; i < scopedActivities.size(); i++) {
+			Node scopedActivity = scopedActivities.get(i);
+			scopedActivity = fragmentDoc.importNode(scopedActivity, true);
+			scopedActivitiesSequenceElement.appendChild(scopedActivity);
+		}
+		// append the fragment to the process, by finding the scope where the sitme while is and
+		// append it
 		// get elements
 		NodeList fragmentChildNodes = fragmentElement.getChildNodes();
-		Node scopedActivitiesSequenceElement = null;
-
-		// append to process
 		for (int i = 0; i < fragmentChildNodes.getLength(); i++) {
 			Node childNode = fragmentChildNodes.item(i);
 			childNode = bpelDocument.importNode(childNode, true);
-			if (childNode.getLocalName() != null
-					&& childNode.getLocalName().equals("scope")) {
-
-				for (int j = 0; j < childNode.getChildNodes().getLength(); j++) {
-					Node fragmentScopeChild = childNode.getChildNodes().item(j);
-					if (fragmentScopeChild.getLocalName() != null
-							&& fragmentScopeChild.getLocalName().equals(
-									"sequence")) {
-
-						scopedActivitiesSequenceElement = fragmentScopeChild;
-						break;
-
-					}
-				}
-
-			}
+			// // find main scope
+			// if (childNode.getLocalName() != null
+			// && childNode.getLocalName().equals("scope")) {
+			//
+			// // find one of the two scopes (subscribe-scope and while-scope)
+			// for (int j = 0; j < childNode.getChildNodes().getLength(); j++) {
+			// Node fragmentScopeChild = childNode.getChildNodes().item(j);
+			// if (fragmentScopeChild.getLocalName() != null
+			// && fragmentScopeChild.getLocalName().equals(
+			// "sequence")) {
+			//
+			// // while scope has a sequence -> found sequence
+			// for (int k = 0; k < fragmentScopeChild.getChildNodes()
+			// .getLength(); k++) {
+			//
+			// Node mainSequenceChild = fragmentScopeChild
+			// .getChildNodes().item(k);
+			// if (mainSequenceChild.getLocalName() != null
+			// && mainSequenceChild.getLocalName().equals(
+			// "scope")) {
+			//
+			// for (int l = 0; l < mainSequenceChild
+			// .getChildNodes().getLength(); l++) {
+			// if (mainSequenceChild.getChildNodes()
+			// .item(l).getLocalName() != null
+			// && mainSequenceChild
+			// .getChildNodes().item(l)
+			// .getLocalName()
+			// .equals("sequence")
+			// && mainSequenceChild
+			// .getChildNodes().item(l)
+			// .hasAttributes()) {
+			// scopedActivitiesSequenceElement = mainSequenceChild
+			// .getChildNodes().item(l);
+			// break;
+			// }
+			// }
+			//
+			// }
+			// }
+			//
+			// }
+			// }
+			//
+			// }
 			situationScopeNode.getParentNode().insertBefore(childNode,
 					situationScopeNode);
 		}
 
-		for (int i = 0; i < scopedActivities.size(); i++) {
-			Node scopedActivity = scopedActivities.get(i);
-			scopedActivity = bpelDocument.importNode(scopedActivity, true);
-			scopedActivitiesSequenceElement.appendChild(scopedActivity);
-		}
-
+		// remove the defined sitme scope from doc
 		situationScopeNode.getParentNode().removeChild(situationScopeNode);
 	}
 

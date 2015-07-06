@@ -13,13 +13,19 @@
 		<vprop:query><![CDATA[//*[local-name()='Correlation']]]></vprop:query>
 	</vprop:propertyAlias>
 
+	<vprop:propertyAlias messageType="tns:SubscribeSituationRequest"
+		part="parameters" propertyName="tns:SrsServiceNotifyCorrelationProperty">
+		<vprop:query><![CDATA[//*[local-name()='MultiSubscription']/*[local-name()='Correlation']]]></vprop:query>
+	</vprop:propertyAlias>
+
 	<wsdl:types>
 		<xsd:schema targetNamespace="http://www.iaas.uni-stuttgart.de/srsService/">
 			<!-- schema elements for a get interaction -->
 			<xsd:element name="GetRequest">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="SituationEvent" maxOccurs="unbounded" type="tns:SituationEventType" />						
+						<xsd:element name="SituationEvent" maxOccurs="unbounded"
+							type="tns:SituationEventType" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
@@ -34,17 +40,18 @@
 			<xsd:element name="GetResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="Situation" maxOccurs="unbounded" type="tns:SituationEventStatusType" />
+						<xsd:element name="Situation" maxOccurs="unbounded"
+							type="tns:SituationEventStatusType" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
-			
+
 			<xsd:complexType name="SituationEventStatusType">
 				<xsd:sequence>
-					<xsd:element name="SituationId" type="xsd:string"/>
-					<xsd:element name="ObjectId" type="xsd:string"/>
-					<xsd:element name="Triggered" type="xsd:boolean"/>
-					<xsd:element name="PropertyMap" type="tns:PropertyMapType"/>
+					<xsd:element name="SituationId" type="xsd:string" />
+					<xsd:element name="ObjectId" type="xsd:string" />
+					<xsd:element name="Triggered" type="xsd:boolean" />
+					<xsd:element name="PropertyMap" type="tns:PropertyMapType" />
 				</xsd:sequence>
 			</xsd:complexType>
 
@@ -67,13 +74,52 @@
 			<xsd:element name="SubscribeRequest">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="Situation" type="xsd:string" />
-						<xsd:element name="Object" type="xsd:string" />
-						<xsd:element name="Correlation" type="xsd:string" />
-						<xsd:element name="Endpoint" type="xsd:string" />
+						<xsd:element name="MultiSubscription" type="tns:MultiSubscribeRequestType"
+							minOccurs="1" maxOccurs="1" />
+						<!-- <xsd:element name="Subscriptions" type="tns:SubscribeType" minOccurs="0" 
+							maxOccurs="1"/> -->
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
+
+			<xsd:complexType name="MultiSubscribeRequestType">
+				<xsd:sequence>
+					<xsd:element name="Correlation" type="xsd:string" />
+					<xsd:element name="Endpoint" type="xsd:string" />
+					<xsd:element name="Subscriptions" type="tns:MultiSubscribeType" />
+				</xsd:sequence>
+			</xsd:complexType>
+
+			<xsd:complexType name="MultiSubscribeType">
+				<xsd:sequence>
+					<xsd:element name="Subscription" type="tns:SubscribeRequestType2"
+						maxOccurs="unbounded" />
+				</xsd:sequence>
+			</xsd:complexType>
+
+			<xsd:complexType name="SubscribeRequestType2">
+				<xsd:sequence>
+					<xsd:element name="Situation" type="xsd:string" />
+					<xsd:element name="Object" type="xsd:string" />
+				</xsd:sequence>
+			</xsd:complexType>
+
+			<xsd:complexType name="SubscribeType">
+				<xsd:sequence>
+					<xsd:element name="Subscription" type="tns:SubscribeRequestType"
+						maxOccurs="unbounded" />
+				</xsd:sequence>
+			</xsd:complexType>
+
+			<xsd:complexType name="SubscribeRequestType">
+				<xsd:sequence>
+					<xsd:element name="Situation" type="xsd:string" />
+					<xsd:element name="Object" type="xsd:string" />
+					<xsd:element name="Correlation" type="xsd:string" />
+					<xsd:element name="Endpoint" type="xsd:string" />
+				</xsd:sequence>
+			</xsd:complexType>
+
 
 			<xsd:element name="NotifyRequest">
 				<xsd:complexType>
@@ -87,6 +133,11 @@
 
 		</xsd:schema>
 	</wsdl:types>
+
+	<wsdl:message name="EndpointMessage">
+		<wsdl:part name="payload" element="xsd:string" />
+	</wsdl:message>
+
 	<wsdl:message name="GetSituationRequest">
 		<wsdl:part element="tns:GetRequest" name="parameters" />
 	</wsdl:message>
@@ -156,8 +207,12 @@
 			<soap:address
 				location="http://localhost:8080/srsTestService/services/srsService" />
 		</wsdl:port>
+	</wsdl:service>
+	
+	<wsdl:service name="srsServiceCallback">
+	
 		<wsdl:port name="srsCallbackServiceSOAP" binding="tns:srsCallbackServiceSOAP">
-			<soap:address location="http://www.example.org/" />
+			<soap:address location="http://localhost:9763/services/srsCallbackService" />
 		</wsdl:port>
 	</wsdl:service>
 </wsdl:definitions>
