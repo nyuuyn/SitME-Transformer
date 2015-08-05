@@ -142,8 +142,6 @@ public class TaskWorker implements Runnable {
 		// transform sitme scopes
 		SitMEScopeTransformer.transformSitMEScopes(this.currentState);
 
-		// TODO transform rest of sitme activities
-
 		// package process in temp dir
 		try {
 			Path repackagedProcessArchivePath = Paths.get(Files
