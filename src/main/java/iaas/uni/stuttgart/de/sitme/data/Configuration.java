@@ -1,12 +1,15 @@
 package iaas.uni.stuttgart.de.sitme.data;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 /**
  * @author Kalman Kepes - kepeskn@studi.informatik.uni-stuttgart.de
  *
  */
 public class Configuration {
 	
-	private String wso2BpsAddress = "https://localhost:9443";
 	private String wso2BpsUserLogin = "admin";
 	private String wso2BpsPwLogin = "admin";
 	
@@ -15,46 +18,41 @@ public class Configuration {
 	private String srsServiceCallbackAddress = "http://localhost:9763/services/srsServiceCallback.srsServiceCallbackhttpsrsCallbackServiceSOAPEndpoint/";
 	
 
-	public Configuration() {
+	
+	private Properties getProperties() {
+		Properties prop = new Properties();
+		InputStream inStream = this.getClass().getClassLoader().getResourceAsStream("/config.props");
+		try {
+			prop.load(inStream);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return prop;
 	}
 	
 	public String getWso2BpsAddress() {
-		return wso2BpsAddress;
+		return this.getProperties().getProperty("wso2ServiceUrl");
 	}
 
-	public void setWso2BpsAddress(String wso2BpsAddress) {
-		this.wso2BpsAddress = wso2BpsAddress;
-	}
 
 	public String getWso2BpsUserLogin() {
 		return wso2BpsUserLogin;
 	}
 
-	public void setWso2BpsUserLogin(String wso2BpsUserLogin) {
-		this.wso2BpsUserLogin = wso2BpsUserLogin;
-	}
+	
 
 	public String getWso2BpsPwLogin() {
 		return wso2BpsPwLogin;
 	}
-
-	public void setWso2BpsPwLogin(String wso2BpsPwLogin) {
-		this.wso2BpsPwLogin = wso2BpsPwLogin;
-	}
 	
 	public String getSrsServiceAddress(){
-		return this.srsServiceAddress;
+		return this.getProperties().getProperty("srsServiceUrl");
 	}
 	
-	public void setSrsServiceAddress(String srsServiceAddress){
-		this.srsServiceAddress = srsServiceAddress;
-	}
 
 	public String getSrsServiceCallbackAddress() {
 		return srsServiceCallbackAddress;
 	}
 	
-	public void setSrsServiceCallbackAddress(String srsServiceCallbackAddress) {
-		this.srsServiceCallbackAddress = srsServiceCallbackAddress;
-	}
 }

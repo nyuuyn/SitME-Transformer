@@ -1,0 +1,2 @@
+srsServiceUrl=http://localhost:8080/srsTestService/services/srsService
+wso2ServiceUrl=https://localhost:9443
