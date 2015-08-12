@@ -17,7 +17,7 @@
 				name="SRSGetResponse{id}" />
 			<bpel:variable messageType="srsNs{id}:SubscribeSituationRequest"
 				name="SRSSubscribeSituationRequest{id}" />
-				<bpel:variable messageType="srsNs{id}:UnsubscribeSituationRequest" name="SRSUnsubscribeSituationRequest{id}/>
+				<bpel:variable messageType="srsNs{id}:UnsubscribeSituationRequest" name="SRSUnsubscribeSituationRequest{id}"/>
 			<!-- <bpel:variable type="xsd{id}:string" name="srsServiceEndpoint{id}" 
 				/> <bpel:variable type="xsd{id}:string" name="srsServiceCallbackEndpoint{id}" 
 				/> -->
