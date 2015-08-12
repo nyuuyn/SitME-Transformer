@@ -188,7 +188,10 @@
 						</bpel:sequence>
 					</bpel:scope>
 					
-					<!--subscribe <bpel:assign validate="no"
+					
+				</bpel:sequence>
+			</bpel:scope>
+			<!--subscribe <bpel:assign validate="no"
 						name="AssignUnsubscribeSituationRequest{id}">
 
 
@@ -244,8 +247,6 @@
 						inputVariable="SRSUnsubscribeSituationRequest{id}">
 						
 					</bpel:invoke> subscribe-->
-				</bpel:sequence>
-			</bpel:scope>
 		</bpel:sequence>
 	</bpel:scope>
 </fragment>
