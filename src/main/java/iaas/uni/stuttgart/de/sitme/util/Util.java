@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -32,11 +34,15 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+
 /**
  * @author Kalman Kepes - kepeskn@studi.informatik.uni-stuttgart.de
  *
  */
 public class Util {
+	
+	private static final Logger LOG = Logger.getLogger(Util.class
+			.getName());
 
 	public static Document parseFileToDOMDocument(Path xmlFilePath) {
 		DocumentBuilderFactory builderFactory = DocumentBuilderFactory
@@ -178,8 +184,7 @@ public class Util {
 			NodeList definitionsElements = Util.XpathQueryFile(
 					defsXpathExpression, wsdlPath);
 			if (definitionsElements.getLength() != 1) {
-				System.out
-						.println("WSDL files must contain only one definitions element");
+				LOG.log(Level.FINEST,"WSDL files must contain only one definitions element");
 				continue;
 			}
 

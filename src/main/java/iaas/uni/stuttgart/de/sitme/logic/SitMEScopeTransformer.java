@@ -8,6 +8,8 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -37,6 +39,9 @@ import iaas.uni.stuttgart.de.sitme.util.Util;
  *
  */
 public class SitMEScopeTransformer {
+	
+	private static final Logger LOG = Logger.getLogger(SitMEScopeTransformer.class
+			.getName());
 
 	public static void transformSitMEScopes(TaskState taskState) {
 		Path bpelProcessPath = taskState.getProcessBpelPath();
@@ -59,14 +64,14 @@ public class SitMEScopeTransformer {
 		// 'variables' child element (scope,..)
 		switch (variablesNodes.getLength()) {
 		case 0:
-			System.out.println("No global variables element defined in process");
+			LOG.log(Level.FINEST,"No global variables element defined in process");
 			break;
 		case 1:
-			System.out.println("Found single variables element");
+			LOG.log(Level.FINEST,"Found single variables element");
 			variablesNode = variablesNodes.item(0);
 			break;
 		default:
-			System.out.println("Error. Found multiple global variables element");
+			LOG.log(Level.FINEST,"Error. Found multiple global variables element");
 			break;
 		}
 
@@ -92,7 +97,7 @@ public class SitMEScopeTransformer {
 			}
 
 			if (sitMeEventNodes.isEmpty()) {
-				System.out.println("Error. SituationalScope doesn't have a SituationEvent defined");
+				LOG.log(Level.FINEST,"Error. SituationalScope doesn't have a SituationEvent defined");
 				return;
 			}
 
@@ -180,7 +185,7 @@ public class SitMEScopeTransformer {
 		URL scopeFragmentURL = SitMEScopeTransformer.class
 				.getResource("/SitMEScopeFragment.xml");
 
-		System.out.println("Loading SitMEScope fragment from "
+		LOG.log(Level.FINEST,"Loading SitMEScope fragment from "
 				+ scopeFragmentURL);
 		String scopeFragmentString = null;
 		try {
@@ -254,7 +259,7 @@ public class SitMEScopeTransformer {
 			URL eventHandlerFragmentURL = SitMEScopeTransformer.class
 					.getResource("/SitMEScopeEventHandlerFragment.xml");
 
-			System.out.println("Loading SitMEScope eventHandler fragment from "
+			LOG.log(Level.FINEST,"Loading SitMEScope eventHandler fragment from "
 					+ eventHandlerFragmentURL);
 			String eventHandlerFragmentString = null;
 			try {
@@ -279,60 +284,14 @@ public class SitMEScopeTransformer {
 			scopeFragmentString = scopeFragmentString.replace("{eventHandler}",
 					eventHandlerFragmentString);
 
-			// URL notifyReceiveFragmentURL = SitMEScopeTransformer.class
-			// .getResource("/SitMEScopeNotifyReceiveFragment.xml");
-			//
-			// System.out.println("Loading SitMEScope notifyReceive fragment from "
-			// + notifyReceiveFragmentURL);
-			// String notifyReceiveFragmentString = null;
-			// try {
-			// notifyReceiveFragmentString = FileUtils
-			// .readFileToString(new File(notifyReceiveFragmentURL
-			// .toURI()));
-			// } catch (IOException e) {
-			// e.printStackTrace();
-			// } catch (URISyntaxException e) {
-			// e.printStackTrace();
-			// }
-			//
-			// notifyReceiveFragmentString =
-			// notifyReceiveFragmentString.replace(
-			// "{id}", id);
-			// notifyReceiveFragmentString =
-			// notifyReceiveFragmentString.replace(
-			// "{srsServicePortType}",
-			// Constants.SRSService_CallbackPortTypeName);
-			// notifyReceiveFragmentString =
-			// notifyReceiveFragmentString.replace(
-			// "{srsServicePartnerLinkName}",
-			// Constants.SRSService_PartnerLinkName);
-			// notifyReceiveFragmentString =
-			// notifyReceiveFragmentString.replace(
-			// "{linkName}",
-			// "receiveNotifyLink" + id);
-			// scopeFragmentString = scopeFragmentString.replace("{links}",
-			// "<bpel:link name=\"receiveNotifyLink" + id +
-			// "\"/><bpel:link name=\"whileToCompensate" + id +"\"/>");
-			// scopeFragmentString = scopeFragmentString.replace("{sources}",
-			// "<bpel:source linkName=\"receiveNotifyLink" + id + "\"/>");
-			// scopeFragmentString =
-			// scopeFragmentString.replace("{whileSources}",
-			// "<bpel:sources><bpel:source linkName=\"whileToCompensate" + id +
-			// "\"/></bpel:sources>");
-			// scopeFragmentString =
-			// scopeFragmentString.replace("{compensateScope}",
-			// "<bpel:compensateScope target=\"NotifyRequestScope"+
-			// id+"\"><bpel:targets><bpel:target linkName=\"whileToCompensate"+id+"\"/></bpel:targets></bpel:compensateScope>");
-			// scopeFragmentString =
-			// scopeFragmentString.replace("{receiveNotify}",
-			// notifyReceiveFragmentString);
+			
 		} else {
 			scopeFragmentString = scopeFragmentString.replace("{eventHandler}",
 					"");
 		}
 
-		System.out.println("Created following skeleton: ");
-		System.out.println(scopeFragmentString);
+		LOG.log(Level.FINEST,"Created following skeleton: ");
+		LOG.log(Level.FINEST,scopeFragmentString);
 
 		// load the fragment string to dom
 		Element fragmentElement = null;
@@ -375,8 +334,7 @@ public class SitMEScopeTransformer {
 			if (nodes.getLength() == 1) {
 				scopedActivitiesSequenceElement = nodes.item(0);
 			} else {
-				System.out
-						.println("Internal fragment is malformed. Only one sequence with element with attribute name=\"SitMESequence"
+				LOG.log(Level.FINEST,"Internal fragment is malformed. Only one sequence with element with attribute name=\"SitMESequence"
 								+ id + "\" is allowed");
 				return;
 			}
@@ -397,51 +355,7 @@ public class SitMEScopeTransformer {
 		for (int i = 0; i < fragmentChildNodes.getLength(); i++) {
 			Node childNode = fragmentChildNodes.item(i);
 			childNode = bpelDocument.importNode(childNode, true);
-			// // find main scope
-			// if (childNode.getLocalName() != null
-			// && childNode.getLocalName().equals("scope")) {
-			//
-			// // find one of the two scopes (subscribe-scope and while-scope)
-			// for (int j = 0; j < childNode.getChildNodes().getLength(); j++) {
-			// Node fragmentScopeChild = childNode.getChildNodes().item(j);
-			// if (fragmentScopeChild.getLocalName() != null
-			// && fragmentScopeChild.getLocalName().equals(
-			// "sequence")) {
-			//
-			// // while scope has a sequence -> found sequence
-			// for (int k = 0; k < fragmentScopeChild.getChildNodes()
-			// .getLength(); k++) {
-			//
-			// Node mainSequenceChild = fragmentScopeChild
-			// .getChildNodes().item(k);
-			// if (mainSequenceChild.getLocalName() != null
-			// && mainSequenceChild.getLocalName().equals(
-			// "scope")) {
-			//
-			// for (int l = 0; l < mainSequenceChild
-			// .getChildNodes().getLength(); l++) {
-			// if (mainSequenceChild.getChildNodes()
-			// .item(l).getLocalName() != null
-			// && mainSequenceChild
-			// .getChildNodes().item(l)
-			// .getLocalName()
-			// .equals("sequence")
-			// && mainSequenceChild
-			// .getChildNodes().item(l)
-			// .hasAttributes()) {
-			// scopedActivitiesSequenceElement = mainSequenceChild
-			// .getChildNodes().item(l);
-			// break;
-			// }
-			// }
-			//
-			// }
-			// }
-			//
-			// }
-			// }
-			//
-			// }
+			
 			situationScopeNode.getParentNode().insertBefore(childNode,
 					situationScopeNode);
 		}

@@ -3,12 +3,17 @@ package iaas.uni.stuttgart.de.sitme.model;
 import iaas.uni.stuttgart.de.sitme.model.TaskState.State;
 
 import java.nio.file.Path;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Kalman Kepes - kepeskn@studi.informatik.uni-stuttgart.de
  *
  */
 public class TaskState {
+	
+	private static final Logger LOG = Logger.getLogger(TaskState.class
+			.getName());
 
 	public enum State {
 		DOWNLOADED, UNPACKING, SITMEXFORMING, DEPLOYING, SUBSCRIBING, FINISHED, ERROR
@@ -87,9 +92,9 @@ public class TaskState {
 	}
 
 	public void printState() {
-		System.out.println("Task: " + this);
-		System.out.println("Current State: " + this.currentState);
-		System.out.println("Current Message: " + this.currentMessage);
+		LOG.log(Level.FINEST,"Task: " + this);
+		LOG.log(Level.FINEST,"Current State: " + this.currentState);
+		LOG.log(Level.FINEST,"Current Message: " + this.currentMessage);
 	}
 
 	public void setProcessWSDLPath(Path processWSDLFile) {

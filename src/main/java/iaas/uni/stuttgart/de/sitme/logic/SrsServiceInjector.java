@@ -6,6 +6,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
 import org.w3c.dom.Document;
@@ -23,6 +25,9 @@ import iaas.uni.stuttgart.de.sitme.util.Util;
  *
  */
 public class SrsServiceInjector {
+	
+	private static final Logger LOG = Logger.getLogger(SrsServiceInjector.class
+			.getName());
 
 	public static void injectSrsService(TaskState taskState) {
 		// add wsdl to working dir
@@ -31,7 +36,7 @@ public class SrsServiceInjector {
 		URL srsServiceUrl = taskState.getClass()
 				.getResource("/srsService.wsdl");
 
-		System.out.println("Adding srsService.wsdl to working dir from: "
+		LOG.log(Level.FINEST,"Adding srsService.wsdl to working dir from: "
 				+ srsServiceUrl);
 
 		Path srsServicePath = null;
@@ -274,8 +279,7 @@ public class SrsServiceInjector {
 			processNode = processNodes.item(0);
 			break;
 		default:
-			System.out
-					.println("Error. Found not only one process element in deploy.xml");
+			LOG.log(Level.FINEST,"Error. Found not only one process element in deploy.xml");
 			break;
 		}
 

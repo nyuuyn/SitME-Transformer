@@ -3,6 +3,8 @@ package iaas.uni.stuttgart.de.sitme.logic;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -19,6 +21,9 @@ import iaas.uni.stuttgart.de.sitme.util.Util;
  *
  */
 public class SitMEEventTransformer {
+	
+	private static final Logger LOG = Logger.getLogger(SitMEEventTransformer.class
+			.getName());
 
 	public static List<Subscription> transformSitMEEvents(TaskState taskState) {
 
@@ -49,16 +54,14 @@ public class SitMEEventTransformer {
 		// 'variables' child element  (scope,..)
 		switch (variablesNodes.getLength()) {
 		case 0:
-			System.out
-					.println("No global variables element defined in process");
+			LOG.log(Level.FINEST,"No global variables element defined in process");
 			break;
 		case 1:
-			System.out.println("Found single variables element");
+			LOG.log(Level.FINEST,"Found single variables element");
 			variablesNode = variablesNodes.item(0);
 			break;
 		default:
-			System.out
-					.println("Error. Found multiple global variables element");
+			LOG.log(Level.FINEST,"Error. Found multiple global variables element");
 			break;
 		}
 
@@ -88,26 +91,24 @@ public class SitMEEventTransformer {
 			}
 
 			if (situationNode == null) {
-				System.out
-						.println("SituationEvent must have Situation and Object elements.");
+				LOG.log(Level.FINEST,"SituationEvent must have Situation and Object elements.");
 				return null;
 			}
 
 			if (objectNode == null) {
-				System.out
-						.println("SituationEvent must have Situation and Object elements.");
+				LOG.log(Level.FINEST,"SituationEvent must have Situation and Object elements.");
 				return null;
 			}
 
-			System.out.println("SituationNodeName: "
+			LOG.log(Level.FINEST,"SituationNodeName: "
 					+ situationNode.getNodeName());
-			System.out.println(situationNode.getTextContent());
-			System.out.println(situationNode.getNodeValue());
-			System.out.println(situationNode.getNodeType());
-			System.out.println("ObjectNodeName: " + objectNode.getNodeName());
-			System.out.println(objectNode.getTextContent());
-			System.out.println(objectNode.getNodeValue());
-			System.out.println(objectNode.getNodeType());
+			LOG.log(Level.FINEST,situationNode.getTextContent());
+			LOG.log(Level.FINEST,situationNode.getNodeValue());
+			LOG.log(Level.FINEST,String.valueOf(situationNode.getNodeType()));
+			LOG.log(Level.FINEST,"ObjectNodeName: " + objectNode.getNodeName());
+			LOG.log(Level.FINEST,objectNode.getTextContent());
+			LOG.log(Level.FINEST,objectNode.getNodeValue());
+			LOG.log(Level.FINEST,String.valueOf(objectNode.getNodeType()));
 
 			subscriptions.add(new Subscription(situationNode.getTextContent(),
 					objectNode.getTextContent()));

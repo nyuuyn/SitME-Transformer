@@ -10,6 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.opentosca.bpsconnector.BpsConnector;
 import org.opentosca.util.fileaccess.service.impl.zip.ZipManager;
@@ -40,6 +42,9 @@ import iaas.uni.stuttgart.de.sitme.util.Util;
  *
  */
 public class TaskWorker implements Runnable {
+	
+	private static final Logger LOG = Logger.getLogger(TaskWorker.class
+			.getName());
 
 	private TaskState currentState;
 
@@ -70,7 +75,7 @@ public class TaskWorker implements Runnable {
 		ZipManager.getInstance().unzip(
 				this.currentState.getWorkflowPath().toFile(),
 				this.currentState.getWorkingDir().toFile());
-		System.out.println("Extracted Zip to working dir: "
+		LOG.log(Level.FINEST,"Extracted Zip to working dir: "
 				+ this.currentState.getWorkingDir().toString());
 
 		this.currentState.setCurrentState(TaskState.State.SITMEXFORMING);
@@ -109,7 +114,7 @@ public class TaskWorker implements Runnable {
 
 		String processName = processNameWithNamespace.split(":")[1];
 
-		System.out.println("Found processName: " + processName);
+		LOG.log(Level.FINEST,"Found processName: " + processName);
 
 		Path processBpelPath = Paths.get(this.currentState.getWorkingDir()
 				.toString(), processName + ".bpel");
@@ -155,7 +160,7 @@ public class TaskWorker implements Runnable {
 					this.currentState.getWorkingDir().toFile(),
 					repackagedProcessArchivePath.toFile());
 
-			System.out.println("Repackaged process into zip file at: "
+			LOG.log(Level.FINEST,"Repackaged process into zip file at: "
 					+ this.currentState.getRepackagedProcessPath().toString());
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -179,10 +184,10 @@ public class TaskWorker implements Runnable {
 
 		URI srsCallbackEndpoint = null;
 
-		System.out.println("Found following endpoints: ");
+		LOG.log(Level.FINEST,"Found following endpoints: ");
 		for (String serviceName : endpoints.keySet()) {
-			System.out.println("ServiceName: " + serviceName);
-			System.out.println("Endpoint: " + endpoints.get(serviceName));
+			LOG.log(Level.FINEST,"ServiceName: " + serviceName);
+			LOG.log(Level.FINEST,"Endpoint: " + endpoints.get(serviceName));
 
 			if (serviceName.equals(Constants.SRSService_PartnerLinkName)) {
 				srsCallbackEndpoint = endpoints.get(serviceName);
