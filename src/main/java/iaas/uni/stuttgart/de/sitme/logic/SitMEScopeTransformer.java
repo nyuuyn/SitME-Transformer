@@ -41,20 +41,17 @@ public class SitMEScopeTransformer {
 	public static void transformSitMEScopes(TaskState taskState) {
 		Path bpelProcessPath = taskState.getProcessBpelPath();
 
-		Document bpelProcessDocument = Util
-				.parseFileToDOMDocument(bpelProcessPath);
+		Document bpelProcessDocument = Util.parseFileToDOMDocument(bpelProcessPath);
 
-		String xpathExpression = "//*[local-name()='SituationalScope' and namespace-uri()='"
-				+ Constants.SitME_Namespace + "']";
+		String xpathExpression = "//*[local-name()='SituationalScope' and namespace-uri()='" + Constants.SitME_Namespace
+				+ "']";
 
-		NodeList sitMeScopeNodes = Util.XpathQueryDocument(xpathExpression,
-				bpelProcessDocument);
+		NodeList sitMeScopeNodes = Util.XpathQueryDocument(xpathExpression, bpelProcessDocument);
 
 		// find global variable element
 		xpathExpression = "/*[local-name()='process']/*[local-name()='variables']";
 
-		NodeList variablesNodes = Util.XpathQueryDocument(xpathExpression,
-				bpelProcessDocument);
+		NodeList variablesNodes = Util.XpathQueryDocument(xpathExpression, bpelProcessDocument);
 
 		Node variablesNode = null;
 		// FIXME works only if one global variables element is defined
@@ -62,16 +59,14 @@ public class SitMEScopeTransformer {
 		// 'variables' child element (scope,..)
 		switch (variablesNodes.getLength()) {
 		case 0:
-			System.out
-					.println("No global variables element defined in process");
+			System.out.println("No global variables element defined in process");
 			break;
 		case 1:
 			System.out.println("Found single variables element");
 			variablesNode = variablesNodes.item(0);
 			break;
 		default:
-			System.out
-					.println("Error. Found multiple global variables element");
+			System.out.println("Error. Found multiple global variables element");
 			break;
 		}
 
@@ -89,8 +84,7 @@ public class SitMEScopeTransformer {
 					continue;
 				}
 
-				if (sitMeScopeChildren.item(j).getLocalName()
-						.equals("SituationEvent")) {
+				if (sitMeScopeChildren.item(j).getLocalName().equals("SituationEvent")) {
 					sitMeEventNodes.add(sitMeScopeChildren.item(j));
 				} else {
 					scopedActivities.add(sitMeScopeChildren.item(j));
@@ -98,13 +92,11 @@ public class SitMEScopeTransformer {
 			}
 
 			if (sitMeEventNodes.isEmpty()) {
-				System.out
-						.println("Error. SituationalScope doesn't have a SituationEvent defined");
+				System.out.println("Error. SituationalScope doesn't have a SituationEvent defined");
 				return;
 			}
 
-			String entryMode = SitMEScopeTransformer
-					.consolidateEntryMode(sitMeEventNodes);
+			String entryMode = SitMEScopeTransformer.consolidateEntryMode(sitMeEventNodes);
 			// simple check for wait logic
 			if (entryMode.contains("Wait")) {
 				// parse out the seconds (assuming only
@@ -114,16 +106,14 @@ public class SitMEScopeTransformer {
 
 				int seconds = Integer.parseInt(entryMode);
 
-				SitMEScopeTransformer.addWaitControlFlow(bpelProcessDocument,
-						sitMeScopeNode, scopedActivities,
-						String.valueOf(System.currentTimeMillis()), seconds,
-						sitMeEventNodes, Constants.SRSService_PartnerLinkName);
+				SitMEScopeTransformer.addWaitControlFlow(bpelProcessDocument, sitMeScopeNode, scopedActivities,
+						String.valueOf(System.currentTimeMillis()), seconds, sitMeEventNodes,
+						Constants.SRSService_PartnerLinkName);
 			} else if (entryMode.equals("Abort")) {
 				// here we add abort logic
-				SitMEScopeTransformer.addWaitControlFlow(bpelProcessDocument,
-						sitMeScopeNode, scopedActivities,
-						String.valueOf(System.currentTimeMillis()), 1,
-						sitMeEventNodes, Constants.SRSService_PartnerLinkName);
+				SitMEScopeTransformer.addWaitControlFlow(bpelProcessDocument, sitMeScopeNode, scopedActivities,
+						String.valueOf(System.currentTimeMillis()), 1, sitMeEventNodes,
+						Constants.SRSService_PartnerLinkName);
 			}
 
 		}
@@ -136,8 +126,7 @@ public class SitMEScopeTransformer {
 		List<String> entryModes = new ArrayList<String>();
 
 		for (Node situationNodeEvent : situationEventNodes) {
-			entryModes.add(SitMEScopeTransformer.getChildNodeValue(
-					situationNodeEvent, "EntryMode"));
+			entryModes.add(SitMEScopeTransformer.getChildNodeValue(situationNodeEvent, "EntryMode"));
 		}
 
 		int entryModeSeconds = 0;
@@ -259,6 +248,9 @@ public class SitMEScopeTransformer {
 
 		// check for eventhandler (SitME Abort Handling)
 		if (needsEventHandler) {
+			// activate subscribe activities (remove comment brackets..)
+			scopeFragmentString = scopeFragmentString.replace("<!--subscribe", "").replace("subscribe-->", "");
+			
 			URL eventHandlerFragmentURL = SitMEScopeTransformer.class
 					.getResource("/SitMEScopeEventHandlerFragment.xml");
 
@@ -459,12 +451,8 @@ public class SitMEScopeTransformer {
 	}
 
 	private static String generateSituationEventElement(Node situationEventNode) {
-		return "<SituationEvent><Situation>"
-				+ SitMEScopeTransformer.getChildNodeValue(situationEventNode,
-						"Situation")
-				+ "</Situation>"
-				+ "<Object>"
-				+ SitMEScopeTransformer.getChildNodeValue(situationEventNode,
-						"Object") + "</Object></SituationEvent>";
+		return "<SituationEvent><Situation>" + SitMEScopeTransformer.getChildNodeValue(situationEventNode, "Situation")
+				+ "</Situation>" + "<Object>" + SitMEScopeTransformer.getChildNodeValue(situationEventNode, "Object")
+				+ "</Object></SituationEvent>";
 	}
 }

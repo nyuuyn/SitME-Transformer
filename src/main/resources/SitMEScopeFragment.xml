@@ -32,7 +32,7 @@
 		<bpel:sequence>
 			<bpel:scope name="SubscribeScope">
 				<bpel:sequence>
-					<bpel:assign validate="no"
+					<!--subscribe <bpel:assign validate="no"
 						name="AssignSubscribeSituationRequest{id}">
 
 
@@ -60,7 +60,6 @@
 							<bpel:from>
 								<bpel:literal>{srsServiceCallbackEndpoint}</bpel:literal>
 							</bpel:from>
-							<!-- <bpel:from partnerLink="{srsPartnerLink}" endpointReference="myRole"/> -->
 							<bpel:to variable="SRSSubscribeSituationRequest{id}"
 								part="parameters">
 								<bpel:query queryLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath2.0"><![CDATA[//*[local-name()='MultiSubscription']/*[local-name()='Endpoint']]]></bpel:query>
@@ -92,7 +91,7 @@
 						</bpel:correlations>
 
 
-					</bpel:invoke>
+					</bpel:invoke> subscribe-->
 					<bpel:scope>
 
 						{eventHandler}
