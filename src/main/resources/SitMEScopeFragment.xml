@@ -17,6 +17,7 @@
 				name="SRSGetResponse{id}" />
 			<bpel:variable messageType="srsNs{id}:SubscribeSituationRequest"
 				name="SRSSubscribeSituationRequest{id}" />
+				<bpel:variable messageType="srsNs{id}:UnsubscribeSituationRequest" name="SRSUnsubscribeSituationRequest{id}/>
 			<!-- <bpel:variable type="xsd{id}:string" name="srsServiceEndpoint{id}" 
 				/> <bpel:variable type="xsd{id}:string" name="srsServiceCallbackEndpoint{id}" 
 				/> -->
@@ -186,6 +187,63 @@
 							</bpel:while>
 						</bpel:sequence>
 					</bpel:scope>
+					
+					<!--subscribe <bpel:assign validate="no"
+						name="AssignUnsubscribeSituationRequest{id}">
+
+
+
+						<bpel:copy>
+							<bpel:from>
+								<bpel:literal>
+									<tns{id}:UnsubscribeRequest xmlns:tns{id}="http://www.iaas.uni-stuttgart.de/srsService/"
+										xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+										<MultiUnsubscription>
+											<Correlation>{Correlation}</Correlation>
+											<Endpoint></Endpoint>
+											<Subscriptions>
+												{Subscription}
+											</Subscriptions>
+										</MultiUnsubscription>
+									</tns{id}:UnsubscribeRequest>
+								</bpel:literal>
+							</bpel:from>
+							<bpel:to variable="SRSUnsubscribeSituationRequest{id}"
+								part="parameters" />
+						</bpel:copy>
+
+						<bpel:copy>
+							<bpel:from>
+								<bpel:literal>{srsServiceCallbackEndpoint}</bpel:literal>
+							</bpel:from>
+							<bpel:to variable="SRSUnsubscribeSituationRequest{id}"
+								part="parameters">
+								<bpel:query queryLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath2.0"><![CDATA[//*[local-name()='MultiUnsubscription']/*[local-name()='Endpoint']]]></bpel:query>
+							</bpel:to>
+						</bpel:copy>
+
+						<bpel:copy>
+							<bpel:from>
+								<bpel:literal>
+									<wsa:ReplyTo xmlns:wsa="http://www.w3.org/2005/08/addressing"
+										xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+										<Address>{srsServiceCallbackEndpoint}</Address>
+									</wsa:ReplyTo>
+								</bpel:literal>
+							</bpel:from>
+							<bpel:to variable="SRSUnsubscribeSituationRequest{id}"
+								header="ReplyTo">
+							</bpel:to>
+						</bpel:copy>
+
+					</bpel:assign>
+
+
+					<bpel:invoke name="InvokeSRSUnsubscribeSituation{id}"
+						partnerLink="{srsPartnerLink}" operation="Unsubscribe" portType="srsNs{id}:srsService"
+						inputVariable="SRSUnsubscribeSituationRequest{id}">
+						
+					</bpel:invoke> subscribe-->
 				</bpel:sequence>
 			</bpel:scope>
 		</bpel:sequence>
